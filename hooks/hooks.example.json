@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /absolute/path/to/writing-memory/hooks/codex_stop.py",
+            "timeout": 30,
+            "statusMessage": "Saving selected writing session locally"
+          }
+        ]
+      }
+    ]
+  }
+}

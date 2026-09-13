@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "project_path": "/absolute/path/to/selected/project",
+  "storage_root": ".writing-memory",
+  "task_id": "task_REPLACE",
+  "session_id": "REPLACE_WITH_EXACT_CODEX_SESSION_ID",
+  "transcript_path": "/absolute/path/to/explicitly/selected/rollout.jsonl",
+  "document_path": "selected-document.md"
+}

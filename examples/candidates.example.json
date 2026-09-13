@@ -1,0 +1,24 @@
+{
+  "candidates": [
+    {
+      "content": "面向领导决策的方案，开头先给推荐路径，再说明证据与取舍。",
+      "category": "method",
+      "scope": {
+        "document_types": ["决策方案"],
+        "audiences": ["领导"],
+        "topics": ["*"]
+      },
+      "source": {
+        "event_id": "替换为真实轮次编号",
+        "before_version": "V1",
+        "after_version": "V2",
+        "before_paragraph_ids": [],
+        "after_paragraph_ids": []
+      },
+      "rationale": "本轮指令要求优先呈现推荐路径；该要求仅适用于给领导判断路径的决策方案。",
+      "reusable": true,
+      "evidence": [],
+      "as_of": null
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "description": "Save only the explicitly bound writing task locally at the end of a turn.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/hooks/codex_stop.py\"",
+            "timeout": 45,
+            "statusMessage": "保存指定文稿和会话记录"
+          }
+        ]
+      }
+    ]
+  }
+}
