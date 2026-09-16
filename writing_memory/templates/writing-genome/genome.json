@@ -1,0 +1,9 @@
+{
+  "genome_schema_version": "3",
+  "genome_id": "example:team-writing",
+  "base": "default",
+  "components": [
+    {"id": "instructions", "source": "./components/instructions.json", "contract": "./contracts/instructions.dev.md"},
+    {"id": "resources", "source": "./components/resources.json", "contract": "./contracts/resources.dev.md"}
+  ]
+}

@@ -12,3 +12,6 @@ build/
 .writing-memory-hook.json
 .local/
 demo-output/
+
+# Per-user API credentials must never be shared
+credentials.json

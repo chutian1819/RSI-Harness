@@ -1,0 +1,5 @@
+{
+  "component_schema_version": "1",
+  "component_id": "resources",
+  "config": {"resources": {"isolate": true}}
+}
