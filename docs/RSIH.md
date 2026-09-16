@@ -1,3 +1,5 @@
+> v0.3 日常使用请先看 [六课新手教程](GETTING_STARTED.md)，运行 `writing-memory-rsih web`。本页主要记录保留兼容的旧终端接口：`revise` 会直接更新当前稿，`view` 是只读页面，`decide` 是团队候选处理；它们不等同于新网页的草稿采用和个人确认流程。
+
 # RSIH 文稿管理适配器
 
 这是 `writing_memory.rsih_workspace` 提供的可选入口。它补齐“每篇材料独立目录、逐轮版本、意见关联、候选列表”，继续使用 RSIH 调用模型，复用本项目已有 Store 和 ExperienceLibrary。没有修改上游 RSIH 或覆盖以前的实验数据。

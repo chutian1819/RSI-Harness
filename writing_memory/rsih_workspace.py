@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import difflib
 import html
 import json
 import os
@@ -14,7 +13,7 @@ import time
 
 from .core import Store
 from .experience import ExperienceLibrary
-from .util import atomic_json, atomic_write, digest, file_lock, new_id, read_json, utc_now, validate_id
+from .util import atomic_json, atomic_write, digest, file_lock, new_id, read_json, utc_now, validate_id, text_diff
 
 
 DEFAULT_STATE = Path.home() / ".local/share/rsih-writing-lab"
@@ -45,12 +44,21 @@ def assistant_text(stdout: str) -> str:
 
 
 class RsihClient:
-    def __init__(self, state: Path, model=DEFAULT_MODEL, binary=None, timeout=240):
+    def __init__(self, state: Path, model=None, binary=None, timeout=240):
         self.state = Path(state).resolve()
-        self.model = model
+        settings = self.state / "writing-settings.json"
+        self.model = model or (read_json(settings).get("model") if settings.exists() else None) or DEFAULT_MODEL
         from .rsih_setup import locate_binary
         self.binary = locate_binary(self.state, binary)
         self.timeout = timeout
+
+    def validate_genome(self, genome):
+        env = dict(os.environ, RSIH_CODING_AGENT_DIR=str(self.state / "managed-agent"))
+        with file_lock(self.state / "model-lock"):
+            result = subprocess.run([str(self.binary), "genome", "validate", str(genome)],
+                                    cwd=self.state, env=env, capture_output=True, text=True, timeout=30)
+        if result.returncode:
+            raise ValueError("派生 Genome 校验失败：" + (result.stderr or result.stdout)[-1000:])
 
     def environment(self):
         env = dict(os.environ)
@@ -65,6 +73,10 @@ class RsihClient:
         return env
 
     def generate(self, prompt: str, operation: Path, workspace: Path, genome: Path | None):
+        settings = self.state / "writing-settings.json"
+        limit = read_json(settings).get("max_context_bytes", 60000) if settings.exists() else 60000
+        if len(prompt.encode("utf-8")) > limit:
+            raise ValueError("上下文超过保守预算，未调用模型；请拆分材料或核实容量后调整 max_context_bytes，历史未删减")
         env = self.environment()
         secret = env["DEEPSEEK_API_KEY"]
         scrub = lambda text: text.replace(secret, "[REDACTED]")
@@ -73,7 +85,8 @@ class RsihClient:
         with file_lock(self.state / "model-lock"):
             agent = self.state / "managed-agent"
             agent.mkdir(exist_ok=True)
-            atomic_json(agent / "models.json", read_json(self.state / "agent/models.json"))
+            model_config = read_json(self.state / "agent/models.json")
+            atomic_json(agent / "models.json", model_config)
             args = [str(self.binary), "--offline", "--model", self.model, "--thinking", "off",
                     "--cwd", str(workspace), "--session-dir", str(workspace / "sessions"),
                     "--run-id", new_id("call"), "--no-tools", "--no-skills", "--no-extensions",
@@ -86,6 +99,13 @@ class RsihClient:
             args += ["-p"]
             attempt = operation / new_id("attempt")
             attempt.mkdir()
+            provider_name, _, model_name = self.model.partition("/")
+            provider = model_config.get("providers", {}).get(provider_name, {})
+            definition = next((item for item in provider.get("models", []) if item.get("id") == model_name), {})
+            atomic_json(attempt / "model-configuration.json", {
+                "model": self.model, "provider": {k: provider[k] for k in ("baseUrl", "api") if k in provider},
+                "definition": {k: definition[k] for k in ("id", "name", "contextWindow", "maxTokens", "reasoning", "input", "compat") if k in definition},
+                "thinking": "off", "max_turns": 1, "tools_enabled": False})
             atomic_json(attempt / "request.json", {"model": self.model, "cwd": str(workspace),
                         "genome": str(genome) if genome else None, "created_at": utc_now()})
             proc = subprocess.Popen(args, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -162,9 +182,8 @@ class Manuscripts:
             folder = path / "turns" / validate_id(turn["event_id"])
             atomic_json(folder / "association.json", turn)
             atomic_write(folder / "instruction.txt", turn["instruction"])
-            diff = "".join(difflib.unified_diff((before or {}).get("content", "").splitlines(True),
-                          (after or {}).get("content", "").splitlines(True),
-                          fromfile=turn["before_version"] or "missing", tofile=turn["after_version"] or "missing"))
+            diff = text_diff((before or {}).get("content", ""), (after or {}).get("content", ""),
+                             fromfile=turn["before_version"] or "missing", tofile=turn["after_version"] or "missing")
             atomic_write(folder / "change.diff", diff)
 
     def _response(self, path, op, prompt, retry, genome=None):
@@ -277,7 +296,7 @@ class Manuscripts:
             self.dashboard()
             return result["capture_result"]
 
-    def extract(self, doc_id, event_id=None, retry=False):
+    def extract(self, doc_id, event_id=None, retry=False, task_snapshot=None):
         path = self.directory(doc_id)
         event_id = validate_id(event_id or new_id("extract"))
         print("本轮提炼编号：" + event_id, file=sys.stderr, flush=True)
@@ -293,7 +312,7 @@ class Manuscripts:
                 if meta["state"] == "completed":
                     return meta["candidate_ids"]
             else:
-                snapshot = self.library.prepare_extraction(task)
+                snapshot = self.library.prepare_extraction(task_snapshot or task)
                 directory = self.store.root / "extractions" / snapshot["id"]
                 manifest = read_json(directory / "manifest.json")
                 manifest["model"] = "rsih/" + self.client.model
@@ -424,14 +443,18 @@ def menu(app):
 def main(argv=None):
     parser = argparse.ArgumentParser(description="RSIH 文稿版本与候选经验管理（独立适配器）")
     parser.add_argument("--state", type=Path, default=DEFAULT_STATE)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--model", default=None)
     sub = parser.add_subparsers(dest="command", required=True)
     setup_parser = sub.add_parser("setup", help="首次配置：检查引擎、创建示例规则、保存自己的密钥")
     setup_parser.add_argument("--rsih", type=Path, help="RSIH 可执行文件的路径")
     setup_parser.add_argument("--skip-key", action="store_true", help="暂不保存密钥，仅配置本地功能")
     setup_parser.add_argument("--replace-key", action="store_true", help="显式更换已保存的密钥")
+    setup_parser.add_argument("--model-id", help="选择 DeepSeek 模型名称，例如 deepseek-flash")
     sub.add_parser("doctor", help="检查本机配置，不联网、不展示密钥")
     sub.add_parser("menu"); sub.add_parser("view")
+    web = sub.add_parser("web", help="启动本机写作网页")
+    web.add_argument("--port", type=int, default=8765)
+    web.add_argument("--no-open", action="store_true")
     new = sub.add_parser("new")
     for name in ("title", "purpose", "audience", "document-type"):
         new.add_argument("--" + name, required=True)
@@ -453,9 +476,13 @@ def main(argv=None):
     p.add_argument("--actor", required=True); p.add_argument("--reason", default="")
     args = parser.parse_args(argv)
     try:
+        if args.command == "web":
+            from .web import serve
+            serve(args.state, args.port, not args.no_open, args.model)
+            return 0
         if args.command in ("setup", "doctor"):
             from .rsih_setup import setup, diagnose
-            result = setup(args.state, args.rsih, args.skip_key, args.replace_key) if args.command == "setup" else diagnose(args.state)
+            result = setup(args.state, args.rsih, args.skip_key, args.replace_key, args.model_id) if args.command == "setup" else diagnose(args.state)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0 if args.command == "setup" or result["ready"] else 1
         app = Manuscripts(args.state, RsihClient(args.state, args.model))

@@ -15,3 +15,6 @@ demo-output/
 
 # Per-user API credentials must never be shared
 credentials.json
+.runtime/
+output/
+.playwright-cli/

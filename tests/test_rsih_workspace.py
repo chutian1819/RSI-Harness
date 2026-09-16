@@ -172,6 +172,25 @@ class ResponseTests(unittest.TestCase):
         self.assertEqual(assistant_text(self.event(stopReason="stop")), "正文")
         with self.assertRaises(ValueError): assistant_text('{}')
 
+    def test_actual_transport_saves_redacted_model_configuration(self):
+        with tempfile.TemporaryDirectory() as folder:
+            state=Path(folder)
+            executable=state/'fixture-rsih'
+            response=self.event(stopReason="stop")
+            executable.write_text("#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' '"+response+"'\n")
+            executable.chmod(0o700)
+            atomic_json(state/'agent/models.json',{'providers':{'fixture':{'apiKey':'fixture-should-not-be-copied', 'baseUrl':'https://example.invalid','api':'openai-completions','models':[{'id':'test','contextWindow':65536,'maxTokens':8192}]}}})
+            operation=state/'operation';operation.mkdir()
+            workspace=state/'workspace';workspace.mkdir()
+            with patch.dict('os.environ', {'DEEPSEEK_API_KEY':'fixture-transport-key'}):
+                client=RsihClient(state,'fixture/test',executable)
+                result=client.generate('虚构材料',operation,workspace,None)
+            self.assertEqual(result,'正文')
+            config=next(operation.glob('attempt_*/model-configuration.json'))
+            self.assertNotIn('apiKey',config.read_text())
+            self.assertNotIn('fixture-transport-key',config.read_text())
+            self.assertEqual(read_json(config)['definition']['maxTokens'],8192)
+
     def test_saved_credentials_require_restricted_permissions(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "credentials.json"

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>知稿 · RSIH 写作工作台</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="#" id="home"
+        ><span class="brand-mark">知</span
+        ><span>知稿<small>RSIH WRITING WORKBENCH</small></span></a
+      >
+      <p class="sidebar-intro">
+        每一次修改，都有来处。<br />把好的写法，留给下一篇。
+      </p>
+      <button class="primary new-button" id="new-document">＋ 新建材料</button>
+      <div class="section-label">我的材料 <span id="doc-count">0</span></div>
+      <nav id="documents" aria-label="材料列表"></nav>
+      <div class="sidebar-bottom">
+        <button class="nav-button" id="open-memory">
+          写作记忆 <span>↗</span></button
+        ><button class="nav-button" id="open-guide">
+          从这里开始 <span>↗</span>
+        </button>
+        <div class="connection">
+          <i></i><span id="connection">正在连接本机</span>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <header class="topbar">
+        <span id="breadcrumb">你的写作工作台</span
+        ><label class="actor-label"
+          >确认人
+          <input
+            id="actor"
+            placeholder="你的姓名"
+            maxlength="100"
+            aria-label="确认人" /></label
+        ><span class="local-badge">仅本机 · 私人空间</span>
+      </header>
+      <div id="notice" role="alert" hidden></div>
+      <section id="content" aria-live="polite"></section>
+      <section id="jobs" aria-label="模型任务"></section>
+      <footer>
+        知稿 / RSIH <span>记录 ≠ 学会。确认后的规则，才会用于下一次写作。</span>
+      </footer>
+    </main>
+    <dialog id="new-dialog">
+      <form id="new-form">
+        <div class="eyebrow">START A DOCUMENT</div>
+        <h2>从一篇材料开始</h2>
+        <p class="muted">粘贴原稿，或留空后让 AI 起草。此步只在本机建档。</p>
+        <label
+          >材料名称<input
+            name="title"
+            required
+            maxlength="200"
+            placeholder="例如：九月经营分析"
+        /></label>
+        <div class="form-grid">
+          <label
+            >文种<input
+              name="document_type"
+              required
+              maxlength="200"
+              placeholder="经营分析" /></label
+          ><label
+            >读者<input
+              name="audience"
+              required
+              maxlength="200"
+              placeholder="部门负责人"
+          /></label>
+        </div>
+        <label
+          >用途<input
+            name="purpose"
+            maxlength="2000"
+            placeholder="希望读者看完后了解什么、决定什么" /></label
+        ><label
+          >主题<input
+            name="topic"
+            maxlength="200"
+            placeholder="可选，例如业务经营" /></label
+        ><label class="file-picker"
+          >导入 .md / .txt<input
+            type="file"
+            id="initial-file"
+            accept=".md,.txt,text/plain,text/markdown" /></label
+        ><label
+          >原稿<textarea
+            name="initial"
+            rows="7"
+            placeholder="已有材料粘贴在这里；也可以留空。"
+          ></textarea>
+        </label>
+        <div class="dialog-actions">
+          <button type="button" data-close="new-dialog" class="secondary">
+            取消</button
+          ><button type="submit" class="primary">创建材料</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="memory-dialog"><div id="memory-dialog-content"></div></dialog>
+    <dialog id="share-dialog">
+      <div class="eyebrow">SHARE WHAT YOU CHOOSE</div>
+      <h2>检查后再分享</h2>
+      <p class="muted">
+        包内只有规则和适用范围。请继续检查规则文字中是否有业务专有信息，可直接修改下方内容。
+      </p>
+      <textarea
+        id="share-text"
+        rows="14"
+        aria-label="规则分享包内容"
+      ></textarea>
+      <div class="dialog-actions">
+        <button class="secondary" data-close="share-dialog">取消</button
+        ><button class="primary" id="download-rules">下载规则包</button>
+      </div>
+    </dialog>
+    <input
+      type="file"
+      id="import-rules"
+      accept=".json,application/json"
+      hidden
+    />
+  </body>
+</html>

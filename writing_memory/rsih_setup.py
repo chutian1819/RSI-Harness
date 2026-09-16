@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import getpass
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -17,10 +18,12 @@ def locate_binary(state: Path, explicit=None):
     return Path(explicit or configured or shutil.which("rsih") or Path.home() / ".local/bin/rsih").expanduser().resolve()
 
 
-def setup(state: Path, binary=None, skip_key=False, replace_key=False):
+def setup(state: Path, binary=None, skip_key=False, replace_key=False, model_id=None):
     state = Path(state).expanduser().resolve()
     if skip_key and replace_key:
         raise ValueError("--skip-key 与 --replace-key 不能同时使用")
+    if model_id is not None and not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", model_id):
+        raise ValueError("模型名称只能包含字母、数字、点、短横线和下划线")
     if state.exists() and any(state.iterdir()) and not any((state / p).exists() for p in (
             "agent/models.json", "runtime.json", ".setup-in-progress", "manuscript-assets")):
         raise ValueError("该目录已有其他内容，请指定空目录或现有写作工作台目录")
@@ -46,7 +49,18 @@ def setup(state: Path, binary=None, skip_key=False, replace_key=False):
                 "name": "DeepSeek Flash", "reasoning": False, "input": ["text"],
                 "contextWindow": 65536, "maxTokens": 8192,
                 "compat": {"supportsDeveloperRole": False, "supportsReasoningEffort": False}}]})
+        if model_id:
+            configured_models = models["providers"]["deepseek-study"]["models"]
+            if not any(item["id"] == model_id for item in configured_models):
+                configured_models.append({"id": model_id, "name": model_id, "reasoning": False,
+                    "input": ["text"], "contextWindow": 65536, "maxTokens": 8192,
+                    "compat": {"supportsDeveloperRole": False, "supportsReasoningEffort": False}})
         atomic_json(models_path, models)
+        settings_path = state / "writing-settings.json"
+        settings = read_json(settings_path) if settings_path.exists() else {"model": "deepseek-study/deepseek-flash", "max_context_bytes": 60000}
+        if model_id:
+            settings["model"] = "deepseek-study/" + model_id
+        atomic_json(settings_path, settings)
         genome = state / "genomes/writing-demo"
         # Existing Genomes belong to the user. Never replace them during setup.
         if not (genome / "genome.json").exists():
@@ -77,7 +91,7 @@ def setup(state: Path, binary=None, skip_key=False, replace_key=False):
             "credential_ready": bool(os.environ.get("DEEPSEEK_API_KEY")) or
                 (credential_path.exists() and bool(read_json(credential_path).get("DEEPSEEK_API_KEY"))),
             "model_request_made": False,
-            "next": "运行 writing-memory-rsih menu；选择 1 新建材料，再选择 2 修改材料。"}
+            "next": "运行 writing-memory-rsih web；在浏览器中新建材料，再输入修改要求。menu 是旧版终端入口。"}
 
 
 def diagnose(state: Path):

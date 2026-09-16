@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import difflib
 import fcntl
 import hashlib
 import json
@@ -28,6 +29,12 @@ def new_id(prefix: str) -> str:
 
 def digest(text: str | bytes) -> str:
     return hashlib.sha256(text.encode("utf-8") if isinstance(text, str) else text).hexdigest()
+
+
+def text_diff(before: str, after: str, fromfile="before", tofile="after") -> str:
+    """Keep final lines separate even when manuscripts have no trailing newline."""
+    lines = difflib.unified_diff(before.splitlines(True), after.splitlines(True), fromfile=fromfile, tofile=tofile)
+    return "".join(line if line.endswith("\n") else line + "\n\\ No newline at end of file\n" for line in lines)
 
 
 def validate_id(value: str) -> str:

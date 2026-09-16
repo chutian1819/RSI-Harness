@@ -89,6 +89,19 @@ class SetupTests(unittest.TestCase):
             setup(self.state, self.binary)
         self.assertFalse((self.state / 'credentials.json').exists())
 
+    def test_explicit_model_selection_is_preserved_on_repeat(self):
+        setup(self.state, self.binary, skip_key=True, model_id='deepseek-v4-pro')
+        settings=read_json(self.state/'writing-settings.json')
+        self.assertEqual(settings['model'],'deepseek-study/deepseek-v4-pro')
+        self.assertIn('deepseek-v4-pro',[m['id'] for m in read_json(self.state/'agent/models.json')['providers']['deepseek-study']['models']])
+        setup(self.state, skip_key=True)
+        self.assertEqual(read_json(self.state/'writing-settings.json'),settings)
+
+    def test_invalid_model_name_does_not_create_state(self):
+        with self.assertRaisesRegex(ValueError,'模型名称'):
+            setup(self.state,self.binary,skip_key=True,model_id='../invalid')
+        self.assertFalse(self.state.exists())
+
     def test_refuses_unknown_nonempty_directory(self):
         self.state.mkdir()
         (self.state / 'unrelated.txt').write_text('keep')
