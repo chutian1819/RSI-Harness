@@ -1,13 +1,13 @@
-# 知稿 · RSIH 写作工作台
+# RSI 写作工作台
 
 **每次修改都有来处，确认过的好习惯留给下一篇。**
 
 在本机浏览器中写材料、提修改意见、比较前后稿。每轮保存原文、你的原始指令、AI 草稿和实际使用的规则；你采用后才更新正式稿。AI 自动提炼候选写作经验，你确认后才在同类材料中使用。
 
-第一次使用，请打开 **[六课新手教程](docs/GETTING_STARTED.md)**。想先看原理和目录，请读 **[架构与文件地图](docs/ARCHITECTURE.md)**。
+第一次使用，请打开 **[使用指南](docs/GETTING_STARTED.md)**。想先看原理和目录，请读 **[架构与文件地图](docs/ARCHITECTURE.md)**。
 
 ```text
-原稿 + 本轮要求 + 有效历史要求 + 已确认偏好
+所选参考资料 + 原稿（可空）+ 本轮要求 + 有效历史要求 + 已确认偏好
                   ↓
          RSIH / 派生 Genome → DeepSeek
                   ↓
@@ -20,7 +20,7 @@
 
 ## 安装一次，日常一个命令
 
-macOS，先准备 Git、Python 3.10+、Node 22.19+ 和 npm，以及你自己的 DeepSeek API Key。逐步安装和报错处理见[新手教程](docs/GETTING_STARTED.md)。
+macOS，先准备 Git、Python 3.10+、Node 22.19+ 和 npm，以及你自己的 DeepSeek API Key。逐步安装和报错处理见[使用指南](docs/GETTING_STARTED.md)。
 
 ```sh
 git clone https://github.com/chutian1819/RSI-Harness.git ~/writing-workbench
@@ -36,13 +36,15 @@ cd ~/writing-workbench
 
 ## 你可以做什么
 
-- 导入或粘贴 TXT / Markdown，或从空白起草。
+- 从零起草、根据多份参考资料生成，或修改已有原稿；新建时可填写要求直接生成。
+- 多选或拖入 PDF、PPTX、DOCX、TXT、Markdown、PNG/JPG/WEBP；旧 `.ppt` 通过本机 LibreOffice 转换。
+- 本地解析文字、表格、幻灯片备注和 OCR 文字，按需选择资料，每次调用保留实际资料快照。
 - 多轮改稿、并排查看正文和差异、采用或拒绝草稿。
 - 手工编辑、导出 Markdown、从旧稿生成新的正式版本。
 - 查看每轮原始要求、完整版本和本次实际加载的规则。
 - 自动提炼候选；核对依据、编辑范围、确认、暂缓、拒绝或撤销。
 - 默认按文种和读者应用偏好；一次性的要求可不沿用到后续轮次。
-- 选择并预览规则分享包。同事导入后仍需自己确认。
+- 导出写作习惯：Markdown 附跨 Agent 使用说明，JSON 可导入其他 RSI 工作台，确认后生效。
 
 采用稿件与确认记忆是两个动作。自动提炼会额外调用一次模型，可能得到零条候选。模型请求使用个人 API 额度；会员订阅不等于 API 额度。
 
@@ -57,13 +59,14 @@ cd ~/writing-workbench
 | `manuscripts/` | 正文、正式版本、每轮指令、差异、模型调用快照 |
 | `manuscript-assets/` | 带 Git 历史的权威文稿记录、草稿和经验 |
 | `manuscript-assets/experiences/personal/` | 个人确认的规则与修订记录 |
+| `references/` | 上传原件、解析文字、页码 / 幻灯片编号、文件指纹与解析提示 |
 | `web-jobs/` | 草稿生成和候选提炼的任务状态 |
 
 每位同事独立安装，文稿和偏好不会自动共享。网页只监听本机；调用模型时会发送本次上下文。源码更新不会覆盖个人数据。分享规则包不包含原稿和密钥，但仍应在预览中核对规则文字里的业务信息。
 
 ## 学习与开发
 
-- [六课新手教程](docs/GETTING_STARTED.md)：原理 → 安装 → 改稿 → 追溯 → 验证记忆 → 分享。
+- [使用指南](docs/GETTING_STARTED.md)：原理 → 安装 → 改稿 → 追溯 → 验证记忆 → 分享。
 - [架构与文件地图](docs/ARCHITECTURE.md)：文件作用、上下文流向、为何草稿和正式稿分开。
 - [工程实现](docs/ENGINEERING.md)：存储、恢复、并发和个人记忆设计。
 - [验收记录](docs/ACCEPTANCE.md)：自动化、浏览器与真实模型验证的明确边界。
@@ -75,4 +78,6 @@ cd ~/writing-workbench
 uv build --wheel
 ```
 
-v0.3 以 macOS、纯文本与 Markdown 为主，不直接编辑 Word/PDF，不提供多人服务器和登录账户。保留旧 CLI；旧 `revise` 仍直接更新当前稿，新网页使用“先草稿、后采用”流程。GitHub 团队审核与个人确认分属两套权威，个人确认不会冒充团队发布。
+以 macOS 为主，参考资料支持多格式，生成和正文编辑统一为 Markdown；不提供多人服务器和登录账户。保留旧 CLI；旧 `revise` 仍直接更新当前稿，新网页使用“先草稿、后采用”流程。GitHub 团队审核与个人确认分属两套权威，个人确认不会冒充团队发布。
+
+参考文件每份最多 20 MB、每篇最多 30 份，PDF / PPTX 每份最多 100 页。macOS 使用 Apple Vision 做本地中文 OCR；其他系统需要自行安装 Tesseract 及中文语言包。OCR 提取文字，不能完整解释图表关系、版式和图像含义。完整上下文受本机预算约束，超出会停止调用并提示拆分或取消部分资料，不静默截断。详见[参考资料与 Agent 迁移指南](docs/REFERENCES_AND_AGENTS.md)。

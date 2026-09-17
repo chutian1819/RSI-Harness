@@ -3,27 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>知稿 · RSIH 写作工作台</title>
+    <title>RSI · 写作工作台</title>
     <link rel="stylesheet" href="/assets/style.css" />
     <script src="/assets/app.js" defer></script>
   </head>
   <body>
     <aside class="sidebar">
       <a class="brand" href="#" id="home"
-        ><span class="brand-mark">知</span
-        ><span>知稿<small>RSIH WRITING WORKBENCH</small></span></a
+        ><span class="brand-mark">↻</span
+        ><span>RSI<small>WRITING WORKSPACE</small></span></a
       >
       <p class="sidebar-intro">
-        每一次修改，都有来处。<br />把好的写法，留给下一篇。
+        让每一篇，成为下一篇的经验。<br />写作 · 反馈 · 进化
       </p>
       <button class="primary new-button" id="new-document">＋ 新建材料</button>
       <div class="section-label">我的材料 <span id="doc-count">0</span></div>
       <nav id="documents" aria-label="材料列表"></nav>
       <div class="sidebar-bottom">
         <button class="nav-button" id="open-memory">
-          写作记忆 <span>↗</span></button
+          写作习惯 <span>↗</span></button
         ><button class="nav-button" id="open-guide">
-          从这里开始 <span>↗</span>
+          使用指南 <span>↗</span>
         </button>
         <div class="connection">
           <i></i><span id="connection">正在连接本机</span>
@@ -40,20 +40,28 @@
             placeholder="你的姓名"
             maxlength="100"
             aria-label="确认人" /></label
-        ><span class="local-badge">仅本机 · 私人空间</span>
+        ><span class="local-badge">本地存储 · 模型按需调用</span>
       </header>
       <div id="notice" role="alert" hidden></div>
       <section id="content" aria-live="polite"></section>
       <section id="jobs" aria-label="模型任务"></section>
       <footer>
-        知稿 / RSIH <span>记录 ≠ 学会。确认后的规则，才会用于下一次写作。</span>
+        RSI / WRITING WORKSPACE
+        <span>记录 ≠ 学会。确认后的规则，才会用于下一次写作。</span>
       </footer>
     </main>
     <dialog id="new-dialog">
       <form id="new-form">
         <div class="eyebrow">START A DOCUMENT</div>
-        <h2>从一篇材料开始</h2>
-        <p class="muted">粘贴原稿，或留空后让 AI 起草。此步只在本机建档。</p>
+        <h2>开始你的下一篇</h2>
+        <p class="muted">
+          从一个想法、一组资料，或已有原稿开始。输出统一为 Markdown。
+        </p>
+        <div class="start-modes" aria-label="写作起点">
+          <button type="button" data-mode="blank">01 从零起草</button>
+          <button type="button" data-mode="sources">02 根据资料生成</button>
+          <button type="button" data-mode="revise">03 修改已有稿</button>
+        </div>
         <label
           >材料名称<input
             name="title"
@@ -85,30 +93,67 @@
           >主题<input
             name="topic"
             maxlength="200"
-            placeholder="可选，例如业务经营" /></label
-        ><label class="file-picker"
-          >导入 .md / .txt<input
-            type="file"
-            id="initial-file"
-            accept=".md,.txt,text/plain,text/markdown" /></label
-        ><label
-          >原稿<textarea
-            name="initial"
-            rows="7"
-            placeholder="已有材料粘贴在这里；也可以留空。"
+            placeholder="可选，例如业务经营"
+        /></label>
+        <section id="new-references-section">
+          <label class="file-picker drop-zone" id="new-drop"
+            >＋ 添加参考资料（可多选或拖入）
+            <input
+              type="file"
+              id="new-references"
+              multiple
+              accept=".pdf,.ppt,.pptx,.docx,.md,.txt,.png,.jpg,.jpeg,.webp"
+            />
+            <small
+              >PDF · PPT / PPTX · Word · 文本 · 图片，每份 ≤ 20 MB，最多 30
+              份</small
+            >
+          </label>
+          <div id="new-reference-list"></div>
+          <p class="muted">
+            在本机提取文字，图片 / 扫描页使用
+            OCR。生成时才将所选文字发送给配置的模型。旧版 .ppt 需要
+            LibreOffice，也可另存为 .pptx。
+          </p>
+        </section>
+        <div id="initial-section" hidden>
+          <label class="file-picker"
+            >导入待修改原稿 .md / .txt<input
+              type="file"
+              id="initial-file"
+              accept=".md,.txt"
+          /></label>
+          <label
+            >原稿<textarea
+              name="initial"
+              rows="5"
+              placeholder="粘贴要修改的正文，参考资料请放在上方。"
+            ></textarea>
+          </label>
+        </div>
+        <label
+          >写作要求 <span class="muted">（填写后直接生成，也可稍后补充）</span>
+          <textarea
+            id="first-instruction"
+            rows="4"
+            maxlength="20000"
+            placeholder="请根据参考资料，写一篇面向部门负责人的季度经营分析，约 1500 字。先给出总体判断，再分析数据和下一步建议；资料没有的事实标注待补充。"
           ></textarea>
         </label>
+        <p class="muted">
+          可说明篇幅、结构、语气、必须覆盖的内容，以及不要写什么。之后仍可追加要求。
+        </p>
         <div class="dialog-actions">
           <button type="button" data-close="new-dialog" class="secondary">
             取消</button
-          ><button type="submit" class="primary">创建材料</button>
+          ><button type="submit" class="primary">创建并进入写作 →</button>
         </div>
       </form>
     </dialog>
     <dialog id="memory-dialog"><div id="memory-dialog-content"></div></dialog>
     <dialog id="share-dialog">
       <div class="eyebrow">SHARE WHAT YOU CHOOSE</div>
-      <h2>检查后再分享</h2>
+      <h2>把写作习惯带给其他 Agent</h2>
       <p class="muted">
         包内只有规则和适用范围。请继续检查规则文字中是否有业务专有信息，可直接修改下方内容。
       </p>
@@ -117,9 +162,25 @@
         rows="14"
         aria-label="规则分享包内容"
       ></textarea>
+      <div class="export-guide">
+        <strong>下载后，三步开始使用</strong>
+        <ol>
+          <li>把 Markdown 上传给 Agent，或放进它能读取的工作目录。</li>
+          <li>明确要求它先读取文件，并说明本次文种、读者和额外要求。</li>
+          <li>让它列出匹配的规则，再核对实际输出。</li>
+        </ol>
+        <p>
+          文件内附可复制的开场指令。导出是静态快照，习惯更新后需重新导出；不会自动改变其他
+          Agent 的记忆。
+        </p>
+      </div>
       <div class="dialog-actions">
         <button class="secondary" data-close="share-dialog">取消</button
-        ><button class="primary" id="download-rules">下载规则包</button>
+        ><button class="secondary" id="download-rules">
+          下载 JSON（RSI 导入）</button
+        ><button class="primary" id="download-agent">
+          下载 Markdown（其他 Agent）
+        </button>
       </div>
     </dialog>
     <input

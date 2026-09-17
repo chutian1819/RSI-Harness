@@ -1,4 +1,4 @@
-> v0.3 日常使用请先看 [六课新手教程](GETTING_STARTED.md)，运行 `writing-memory-rsih web`。本页主要记录保留兼容的旧终端接口：`revise` 会直接更新当前稿，`view` 是只读页面，`decide` 是团队候选处理；它们不等同于新网页的草稿采用和个人确认流程。
+> v0.3 日常使用请先看 [使用指南](GETTING_STARTED.md)，运行 `writing-memory-rsih web`。本页主要记录保留兼容的旧终端接口：`revise` 会直接更新当前稿，`view` 是只读页面，`decide` 是团队候选处理；它们不等同于新网页的草稿采用和个人确认流程。
 
 # RSIH 文稿管理适配器
 
@@ -16,7 +16,7 @@
 
 ## 安装及启动
 
-首次使用请先完成 [新手操作手册](GETTING_STARTED.md)。安装引擎和本工作台后，运行 `writing-memory-rsih setup` 创建自己的配置，再用 `writing-memory-rsih doctor` 检查。以下为进阶参考，不要求同事复制作者的私有环境。
+首次使用请先完成 [操作手册](GETTING_STARTED.md)。安装引擎和本工作台后，运行 `writing-memory-rsih setup` 创建自己的配置，再用 `writing-memory-rsih doctor` 检查。以下为进阶参考，不要求同事复制作者的私有环境。
 
 现有 RSIH 试用环境的默认目录为 `~/.local/share/rsih-writing-lab`。适配器读取其中的：
 

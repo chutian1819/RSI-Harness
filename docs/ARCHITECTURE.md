@@ -3,7 +3,7 @@
 ## 三层分工
 
 ```text
-知稿工作台（本仓库 / Python）
+RSI 工作台（本仓库 / Python）
   网页 → 草稿、正式版本、指令与差异 → 候选 → 个人确认
             ↓ 为每轮编制上下文、派生 Genome、保存调用证据
 RSIH 引擎（上游独立安装 / TypeScript / Pi）
@@ -16,7 +16,7 @@ DeepSeek API
 
 ## 上游的文件夹
 
-| 位置 | 作用 | 新手需要修改吗 |
+| 位置 | 作用 | 日常使用是否需要修改 |
 | --- | --- | --- |
 | `src/` | CLI、模型请求、Genome 加载和 Pi 适配 | 不需要 |
 | `config/genomes/` | 出厂 Genome，如 paperlab 和 harness-rsi | 不需要 |
@@ -40,12 +40,14 @@ Genome 通常包含 `genome.json` 清单、`components/*.json` 配置、`contrac
 | `writing_memory/rsih_workspace.py` | 原有终端工作台、RSIH 调用、结果校验、候选提炼 |
 | `writing_memory/rsih_setup.py` | 首次配置、模型选择、诊断 |
 | `writing_memory/workbench.py` | 网页业务：草稿、采用、手工保存、上下文、派生 Genome |
+| `writing_memory/references.py` | 多格式参考资料、独立解析进程、本地 OCR、来源指纹 |
+| `writing_memory/agent_export.py` | 跨 Agent Markdown 习惯导出与使用说明 |
 | `writing_memory/personal_memory.py` | 个人规则确认、范围匹配、冲突核对、撤销和分享 |
 | `writing_memory/jobs.py` | 落盘的单工作线程队列，显式重试 |
 | `writing_memory/web.py` | 仅本机的 HTTP 接口与连接保护 |
 | `writing_memory/static/` | 网页 HTML / CSS / JavaScript，无前端构建工具 |
 | `writing_memory/experience.py` | 有证据的候选与经 GitHub 审核的团队经验，保持独立 |
-| `writing_memory/integrations.py` 等 | 原有可选工具接入，不是入门前提 |
+| `writing_memory/integrations.py` 等 | 原有可选工具接入，不是日常使用的前提 |
 | `scripts/install-macos.sh` | 检查工具、固定引擎版本、创建环境和安装 |
 | `docs/`、`tests/`、`examples/` | 教程、自动化验证、明确标注的虚构测试 |
 

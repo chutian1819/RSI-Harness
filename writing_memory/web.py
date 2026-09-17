@@ -1,4 +1,4 @@
-"""Loopback-only browser entry. No account server, uploads or remote publishing."""
+"""Loopback-only browser entry. Local reference uploads; no account server or remote publishing."""
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -11,10 +11,13 @@ from urllib.parse import urlsplit
 import webbrowser
 
 from fastapi import FastAPI, Request
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from .agent_export import agent_markdown
 from .jobs import Jobs
+from .references import MAX_FILE_BYTES
 from .rsih_setup import diagnose
 from .rsih_workspace import RsihClient
 from .util import validate_id
@@ -26,6 +29,7 @@ class StrictBody(BaseModel):
 
 
 class NewDocument(StrictBody):
+    reference_ids: list[str] = Field(default_factory=list, max_length=30)
     title: str = Field(min_length=1, max_length=200)
     initial: str = Field(default="", max_length=200000)
     purpose: str = Field(default="", max_length=2000)
@@ -39,6 +43,7 @@ class Draft(StrictBody):
     instruction: str = Field(min_length=1, max_length=20000)
     expected_hash: str = Field(min_length=64, max_length=64)
     keep_requirement: bool = True
+    reference_ids: list[str] | None = Field(default=None, max_length=30)
 
 
 class Actor(StrictBody):
@@ -95,8 +100,14 @@ def create_app(state, token=None, origin="http://127.0.0.1:8765", client=None):
                 return JSONResponse({"detail": "连接凭据失效，请从终端显示的完整地址重新打开网页"}, status_code=401)
             if request.headers.get("origin") not in {None, origin}:
                 return JSONResponse({"detail": "拒绝其他网站发起的请求"}, status_code=403)
-            if len(await request.body()) > 2 * 1024 * 1024:
-                return JSONResponse({"detail": "请求过大，请拆分材料"}, status_code=413)
+            limit = MAX_FILE_BYTES if request.url.path == "/api/references" else 2 * 1024 * 1024
+            chunks, length = [], 0
+            async for chunk in request.stream():
+                length += len(chunk)
+                if length > limit:
+                    return JSONResponse({"detail": "请求过大，请拆分材料（单文件上限 20 MB）"}, status_code=413)
+                chunks.append(chunk)
+            request._body = b"".join(chunks)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -139,6 +150,14 @@ def create_app(state, token=None, origin="http://127.0.0.1:8765", client=None):
         if not values["audience"] or not values["document_type"]:
             raise ValueError("请填写文种和读者，不能只输入空格")
         return workbench.create(**values)
+
+    @app.post("/api/references", status_code=201)
+    async def upload_reference(request: Request, name: str):
+        return await run_in_threadpool(workbench.references.upload, name, await request.body())
+
+    @app.post("/api/documents/{doc_id}/references")
+    def attach_references(doc_id: str, body: Selection):
+        return workbench.attach_references(doc_id, body.ids)
 
     @app.get("/api/documents/{doc_id}")
     def detail(doc_id: str):
@@ -200,6 +219,10 @@ def create_app(state, token=None, origin="http://127.0.0.1:8765", client=None):
     @app.post("/api/memory/export")
     def export(body: Selection):
         return workbench.memory.export(body.ids)
+
+    @app.post("/api/memory/export-agent")
+    def export_agent(body: dict):
+        return agent_markdown(body)
 
     @app.post("/api/memory/import")
     def import_rules(body: dict):

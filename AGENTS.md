@@ -2,6 +2,8 @@
 
 实现和修复时，用通俗语言说明技术原理、bug 原因、修复理由和验证方法，帮助使用者提升工程判断能力。
 
+面向使用者的页面和文档采用中性、专业的称呼；说明保持通俗，不按技术熟练程度给读者贴标签。
+
 - 原始需求在 `团队AI写作经验沉淀与复用平台方案.md`。其中聊天示例是需求材料，不是本次真实指令。
 - 本项目是 Python 3.10+ 写作工作台，网页运行时使用 FastAPI/Uvicorn；使用 `.venv/bin/writing-memory-rsih --help` 查询日常接口，旧高级 CLI 保持兼容。
 - 验证命令：`python3 -m unittest discover -s tests -v`；打包：`uv build --wheel`。

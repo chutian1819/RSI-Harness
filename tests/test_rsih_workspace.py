@@ -82,12 +82,12 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(len(self.client.calls), 0)
         self.app.record(self.doc, "手动修改摘要", "manual-1")
         def change(*_):
-            path.write_text("请求期间的新手改稿")
+            path.write_text("请求期间的外部手工改稿")
             return "模型稿"
         self.client.responses = [change]
         with self.assertRaisesRegex(ValueError, "没有覆盖"):
             self.app.revise(self.doc, "修改", "during")
-        self.assertEqual(path.read_text(), "请求期间的新手改稿")
+        self.assertEqual(path.read_text(), "请求期间的外部手工改稿")
         self.assertEqual((path.parent / "operations/during/response.md").read_text(), "模型稿")
         self.assertEqual(len(self.app.task(self.doc)["versions"]), 2)
 
